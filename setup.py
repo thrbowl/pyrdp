@@ -8,21 +8,10 @@
 #
 
 # setuptools MUST be imported first, otherwise we get an error with the ext_modules argument.
-import setuptools
-from distutils.core import Extension, setup
+from setuptools import Extension, setup
 
-setup(name='pyrdp',
-    version='1.1.1.dev0',
-    description='Remote Desktop Protocol Monster-in-the-Middle tool and Python library',
-    long_description="""Remote Desktop Protocol Monster-in-the-Middle tool and Python library""",
-    author='Émilio Gonzalez, Francis Labelle, Olivier Bilodeau, Alexandre Beaulieu',
-    author_email='obilodeau@gosecure.net',
-    url='https://github.com/GoSecure/pyrdp',
-    packages=setuptools.find_packages(include=["pyrdp", "pyrdp.*"]),
-    package_data={
-        "pyrdp": ["mitm/crawler_config/*.txt"],
-        "": ["*.default.ini"]
-    },
+setup(
+    #packages=setuptools.find_packages(include=["pyrdp", "pyrdp.*"]),
     ext_modules=[Extension('rle', ['ext/rle.c'])],
     scripts=[
         'bin/pyrdp-clonecert.py',
@@ -30,6 +19,7 @@ setup(name='pyrdp',
         'bin/pyrdp-player.py',
         'bin/pyrdp-convert.py',
     ],
+
     install_requires=[
         'appdirs>=1,<2',
         'cryptography>=3.3.2,<37',
