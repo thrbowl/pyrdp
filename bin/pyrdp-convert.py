@@ -86,7 +86,7 @@ if __name__ == "__main__":
     if inputFile.suffix in [".pcap"]:
         secrets = loadSecrets(args.secrets) if args.secrets else None
         converter = PCAPConverter(inputFile, outputPrefix, args.format, secrets=secrets, srcFilter=args.src, dstFilter=args.dst, listOnly=args.list_only)
-    elif inputFile.suffix in [".pyrdp"]:
+    elif inputFile.suffix in [".pyrdp", ".done"]:
         if args.format == "replay":
             sys.stderr.write("Refusing to convert a replay file to a replay file. Choose another format.")
             sys.exit(1)
