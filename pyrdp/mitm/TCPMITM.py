@@ -3,10 +3,12 @@
 # Copyright (C) 2019-2021 GoSecure Inc.
 # Licensed under the GPLv3 or later.
 #
+import os
 from logging import LoggerAdapter
 
 from pyrdp.layer import TwistedTCPLayer
 from pyrdp.logging.StatCounter import StatCounter
+from pyrdp.mitm.config import MITMConfig
 from pyrdp.mitm.state import RDPMITMState
 from pyrdp.pdu.player import PlayerConnectionClosePDU
 from pyrdp.recording import Recorder
@@ -18,7 +20,7 @@ class TCPMITM:
     """
 
     def __init__(self, client: TwistedTCPLayer, server: TwistedTCPLayer, attacker: TwistedTCPLayer, log: LoggerAdapter,
-                 state: RDPMITMState, recorder: Recorder, statCounter: StatCounter):
+                 state: RDPMITMState, recorder: Recorder, statCounter: StatCounter, config: MITMConfig):
         """
         :param client: TCP layer for the client side
         :param server: TCP layer for the server side
@@ -35,6 +37,7 @@ class TCPMITM:
         self.log = log
         self.state = state
         self.recorder = recorder
+        self.config = config
 
         # Allows a lower layer to raise error tagged with the correct sessionID
         self.client.log = log
@@ -110,11 +113,30 @@ class TCPMITM:
         self.attacker.disconnect()
         self.detach()
 
+        recordFilepath = os.path.join(self.config.replayDir, self.recorder.recordFilename)
+        if os.path.isfile(recordFilepath):
+            os.rename(recordFilepath, "{}.done".format(recordFilepath)) 
+
     def onServerConnection(self):
         """
         Log the fact that a connection to the server was established.
         """
         self.log.info("Server connected")
+
+        ClientIP = self.client.transport.client[0]
+        ClientPort = self.client.transport.client[1]
+        LocalIP = self.server.transport.getHost().host
+        LocalPort = self.server.transport.getHost().port
+        self.log.info("Hpot.network", {
+            "clientIp": ClientIP,
+            "clientPort": ClientPort,
+            "localIP": LocalIP,
+            "localPort": LocalPort,
+            "targetIP": self.config.targetHost,
+            "targetPort": self.config.targetPort,
+            "middleIP": self.config.listenAddress,
+            "middlePort": self.config.listenPort,
+        })
 
     def onServerDisconnection(self, reason):
         """
@@ -130,6 +152,10 @@ class TCPMITM:
         # For the attacker, we want to make sure we don't abort the connection to make sure that the close event is sent
         self.attacker.disconnect()
         self.detach()
+
+        recordFilepath = os.path.join(self.config.replayDir, self.recorder.recordFilename)
+        if os.path.isfile(recordFilepath):
+            os.rename(recordFilepath, "{}.done".format(recordFilepath)) 
 
     def onAttackerConnection(self):
         """
